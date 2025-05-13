@@ -2,6 +2,7 @@ import random
 import string
 from datetime import datetime
 
+
 from app.db.models import Basket, Category, Item, Order, User
 from app.db.database import async_session_maker
 from sqlalchemy import select
@@ -27,7 +28,7 @@ async def get_categories():
         return await session.scalars(select(Category))
 
 
-async def add_category(data):
+async def add_category(data: dict):
     async with async_session_maker() as session:
         session.add(Category(name=data['name']))
         await session.commit()

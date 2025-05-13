@@ -7,7 +7,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 load_dotenv()
 
 
-
 class User(Base):
     __tablename__ = 'users'
 
@@ -17,28 +16,29 @@ class User(Base):
     first_name: Mapped[str] = mapped_column(String, nullable=True)
     orders: Mapped[list['Order']] = relationship(back_populates='user')
 
+
 class Category(Base):
     __tablename__ = 'categories'
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
     name: Mapped[str] = mapped_column(Text)
 
 
 class Item(Base):
     __tablename__ = 'items'
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
     name: Mapped[str] = mapped_column(Text)
     description: Mapped[str] = mapped_column(Text)
     cost_price: Mapped[float] = mapped_column(Float)
     price: Mapped[float] = mapped_column(Float)
     category: Mapped[int] = mapped_column(ForeignKey('categories.id'))
-    img: Mapped[int] = mapped_column(Text)
+    img: Mapped[str] = mapped_column(Text)
 
 
 class Basket(Base):
     __tablename__ = 'basket'
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
     user: Mapped[int] = mapped_column(ForeignKey('users.id'))
     item: Mapped[int] = mapped_column(ForeignKey('items.id'))
     count: Mapped[int] = mapped_column(Integer)
@@ -46,7 +46,7 @@ class Basket(Base):
 
 class Order(Base):
     __tablename__ = 'Order'
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
     items: Mapped[str] = mapped_column(Text)
     price: Mapped[float] = mapped_column(Float)
@@ -59,6 +59,7 @@ class Order(Base):
     day: Mapped[int] = mapped_column(Integer)
 
     user = relationship('User', back_populates='orders')
+
 
 async def async_main():
     async with engine.begin() as conn:
