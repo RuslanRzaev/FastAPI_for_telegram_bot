@@ -8,11 +8,11 @@ from app.db.database import async_session_maker
 from sqlalchemy import select
 
 
-async def login_user(tg_id):
+async def login_user(tg_id, first_name):
     async with async_session_maker() as session:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
         if not user:
-            session.add(User(tg_id=tg_id))
+            session.add(User(tg_id=tg_id, first_name=first_name))
             await session.commit()
 
 
@@ -147,6 +147,7 @@ async def delete_busket(user_id, item_id):
         else:
             basket.count -= 1
         await session.commit()
+
 
 
 async def get_my_basket(tg_id):
