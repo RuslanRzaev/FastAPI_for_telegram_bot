@@ -17,14 +17,6 @@ class User(Base):
     orders: Mapped[list['Order']] = relationship(back_populates='user')
 
 
-class UserWEB(Base):
-    __tablename__ = 'users_web'
-
-    id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
-    user: Mapped[str] = mapped_column(Text)
-    password: Mapped[str] = mapped_column(Text)
-
-
 class Category(Base):
     __tablename__ = 'categories'
 
