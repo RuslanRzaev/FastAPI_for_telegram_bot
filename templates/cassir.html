@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Заказы в реальном времени</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ Новые заказы</h1>
+        <div id="orders"></div>
+    </div>
+
+    <!-- Модальное окно -->
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Введите код подтверждения</h2>
+            <input type="text" id="codeInput" placeholder="Код">
+            <button onclick="verifyCode()">Проверить</button>
+            <p id="modalMessage"></p>
+        </div>
+    </div>
+
+    <script>
+        const ws = new WebSocket("ws://localhost:8000/cashier/ws/orders");
+        let currentCard = null;
+        let currentOrderId = null;
+        ws.onmessage = function(event) {
+            const order = JSON.parse(event.data);
+            const card = document.createElement("div");
+            card.classList.add("card");
+
+            card.innerHTML = `
+                <div>
+                    <h3>🍕 ${order.id}</h3>
+                    <p>${order.items}</p>
+                </div>
+                <button class="check-btn">✅</button>
+            `;
+
+            card.querySelector(".check-btn").onclick = () => {
+                currentCard = card;
+                currentOrderId = order.id
+                document.getElementById("modal").classList.remove("hidden");
+            };
+
+            document.getElementById("orders").prepend(card);
+        };
+
+        async function verifyCode() {
+            const code = document.getElementById("codeInput").value;
+            const res = await fetch("/cashier/verify_code/" + currentOrderId, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: code })
+            });
+            const data = await res.json();
+            const message = document.getElementById("modalMessage");
+
+            if (data.success) {
+                message.textContent = "✅ Успешно!";
+                currentCard.remove();
+                closeModal();
+            } else {
+                message.textContent = "❌ Неверный код!";
+            }
+        }
+
+        function closeModal() {
+            document.getElementById("modal").classList.add("hidden");
+            document.getElementById("codeInput").value = "";
+            document.getElementById("modalMessage").textContent = "";
+        }
+
+       fetch("/cashier/get_orders/")
+    .then(res => res.json())
+    .then(data => {
+        data.forEach(order => renderOrder(order));
+    });
+        window.onclick = (e) => {
+            if (e.target.id === "modal") closeModal();
+        };
+    </script>
+    <script>
+    function renderOrder(order) {
+        const card = document.createElement("div");
+        card.classList.add("card");
+
+        card.innerHTML = `
+            <div>
+                <h3>🍕 ${"Заказ №" + order.id}</h3>
+                <p>${order.items}</p>
+            </div>
+            <button class="check-btn">✅</button>
+        `;
+
+        card.querySelector(".check-btn").onclick = () => {
+            currentCard = card;
+            currentOrderId = order.id
+            document.getElementById("modal").classList.remove("hidden");
+        };
+
+        document.getElementById("orders").prepend(card);
+    }
+
+    // WebSocket сообщение тоже вызывает renderOrder
+    ws.onmessage = function(event) {
+        const order = JSON.parse(event.data);
+        renderOrder(order);
+    };
+</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 import json
-from app.to_json import result_to_json
+from app.utils import result_to_json
 from fastapi import APIRouter
 from app.schemas import CategoryBase, ItemsBase, CategoryUpdate, ItemsUpdate
 from app.db import requests as rq

@@ -17,6 +17,14 @@ class User(Base):
     orders: Mapped[list['Order']] = relationship(back_populates='user')
 
 
+class UserWEB(Base):
+    __tablename__ = 'users_web'
+
+    id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
+    user: Mapped[str] = mapped_column(Text)
+    password: Mapped[str] = mapped_column(Text)
+
+
 class Category(Base):
     __tablename__ = 'categories'
 
@@ -57,6 +65,7 @@ class Order(Base):
     year: Mapped[int] = mapped_column(Integer)
     month: Mapped[int] = mapped_column(Integer)
     day: Mapped[int] = mapped_column(Integer)
+    send: Mapped[str] = mapped_column(Text, default='False')
 
     user = relationship('User', back_populates='orders')
 

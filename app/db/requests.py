@@ -2,7 +2,6 @@ import random
 import string
 from datetime import datetime
 
-
 from app.db.models import Basket, Category, Item, Order, User
 from app.db.database import async_session_maker
 from sqlalchemy import select
@@ -14,6 +13,12 @@ async def login_user(tg_id, first_name):
         if not user:
             session.add(User(tg_id=tg_id, first_name=first_name))
             await session.commit()
+
+
+async def get_orders_status(status: str):
+    async with async_session_maker() as session:
+        orders = await session.scalars(select(Order).where(Order.status == status))
+        return orders.all()
 
 
 async def get_users():
@@ -147,7 +152,6 @@ async def delete_busket(user_id, item_id):
         else:
             basket.count -= 1
         await session.commit()
-
 
 
 async def get_my_basket(tg_id):
@@ -340,3 +344,37 @@ async def get_category_id_by_product(item_id):
         category_id = result.scalar()
 
         return category_id
+
+
+async def ready_order_bool(order_id: int):
+    async with async_session_maker() as session:
+        result = (await session.scalars(select(Order).where(Order.id == order_id))).first()
+        if result.status.startswith('Готовится'):
+            return True
+        else:
+            return False
+
+
+async def issued_order_bool(order_id: int):
+    async with async_session_maker() as session:
+        result = (await session.scalars(select(Order).where(Order.id == order_id))).first()
+        if result.status.startswith('Готов✅'):
+            return True
+        else:
+            return False
+
+
+async def finished_orders():
+    async with async_session_maker() as session:
+        result = (
+            await session.scalars(select(Order).where(Order.status == 'Готов✅').where(Order.send == 'False'))).all()
+        return result
+
+
+async def change_send_to_true(order_id: int):
+    async with async_session_maker() as session:
+        query = select(Order).where(Order.id == order_id)
+        result = await session.execute(query)
+        order = result.scalar_one_or_none()
+        order.send = 'True'
+        await session.commit()

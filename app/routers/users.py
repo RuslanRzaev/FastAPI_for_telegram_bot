@@ -1,12 +1,15 @@
 import json
+import qrcode
 
 from fastapi import APIRouter
-from sqlalchemy.sql.visitors import replacement_traverse
+from io import BytesIO
+
+from starlette.responses import StreamingResponse
 
 from app.schemas import UserBase, OrderBase
 
 from app.db import requests as rq
-from app.to_json import result_to_json, obj_to_dict
+from app.utils import result_to_json, ADMINS, KITCHEN
 
 user_router = APIRouter(prefix='/user', tags=['user'])
 
@@ -127,3 +130,41 @@ async def id_user_order(order_id: int):
 @user_router.get('/items_id/{item_id}')
 async def items_id(item_id):
     return await rq.get_items_id([*item_id])
+
+@user_router.get('/ready_order_bool/{order_id}')
+async def ready_order_bool(order_id: int) -> bool:
+    return await rq.ready_order_bool(order_id)
+
+@user_router.get('/issued_order_bool/{order_id}')
+async def issued_order_bool(order_id: int) -> bool:
+    return await rq.issued_order_bool(order_id)
+
+@user_router.get('/finished_orders')
+async def finished_orders():
+    return await rq.finished_orders()
+
+@user_router.get('/change_send_to_true/{order_id}')
+async def change_send_to_true(order_id: int):
+    await rq.change_send_to_true(order_id)
+    return 200
+
+@user_router.get('/order_qr_code/{order_id}')
+async def order_qr_code(order_id: int):
+    secret_code = await rq.secret_code(order_id)
+    img = qrcode.make(secret_code)
+    byte_arr = BytesIO()
+    img.save(byte_arr, format='PNG')
+    byte_arr.seek(0)
+    return StreamingResponse(
+        content=byte_arr,
+        media_type="image/png",
+        headers={"Content-Disposition": f"inline; filename=order_{order_id}_qr.png"}
+    )
+
+@user_router.get('/check_admin/{user_id}')
+async def check_admin(user_id: int):
+    return user_id in ADMINS
+
+@user_router.get('/check_kitchen/{user_id}')
+async def check_kitchen(user_id: int):
+    return user_id in KITCHEN
